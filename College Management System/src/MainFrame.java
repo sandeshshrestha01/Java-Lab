@@ -4,84 +4,158 @@ import java.sql.*;
 
 public class MainFrame extends JFrame {
 
-    final Font mainFont = new Font("Segoe Print", Font.BOLD, 16);
+    final Font mainFont = new Font("Segoe Print", Font.PLAIN, 16);
     JPanel noticeListPanel;
 
     public void initialize(AdminUser adminUser) {
 
         setLayout(new BorderLayout());
 
-     JLabel lbWelcome = new JLabel("Welcome, " + adminUser.userName);
-     lbWelcome.setFont(mainFont);
+        // ================= TOP HEADER =================
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(245, 245, 245));
+        header.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(12, 20, 12, 20)
+        ));
 
-     JButton btnAddNotice = new JButton("Add Notice");
-     btnAddNotice.setFont(mainFont);
+        JLabel lbWelcome = new JLabel("Welcome, " + adminUser.userName);
+        lbWelcome.setFont(new Font("Segoe Print", Font.BOLD, 18));
 
-     btnAddNotice.addActionListener(e -> new Notice(this).initialize());
-     
-     //  VERTICAL PANEL
-     JPanel leftPanel = new JPanel();
-     leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-     
-     lbWelcome.setAlignmentX(Component.LEFT_ALIGNMENT);
-     btnAddNotice.setAlignmentX(Component.LEFT_ALIGNMENT);
-     leftPanel.add(lbWelcome);
-     leftPanel.add(Box.createVerticalStrut(8)); // spacing
-     leftPanel.add(btnAddNotice);
-     
-     JPanel topPanel = new JPanel(new BorderLayout());
-     topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-     topPanel.add(leftPanel, BorderLayout.WEST);
+        JLabel logo = new JLabel("🛡 LOGO");
+        logo.setFont(new Font("Segoe Print", Font.BOLD, 18));
 
+        header.add(lbWelcome, BorderLayout.WEST);
+        header.add(logo, BorderLayout.EAST);
 
-        noticeListPanel = new JPanel();
-        noticeListPanel.setLayout(new BoxLayout(noticeListPanel, BoxLayout.Y_AXIS));
+        add(header, BorderLayout.NORTH);
 
-        JScrollPane scrollPane = new JScrollPane(noticeListPanel);
+        // ================= LEFT MENU =================
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        leftPanel.setBackground(Color.WHITE);
 
-        add(topPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        JButton btnAddNotice = new JButton("+ Add Notice");
+        JButton btnStudents = new JButton("+ Add Students");
+        JButton btnStudentview = new JButton(" Students");
+        JButton btnSubjects = new JButton("+ Add Subjects");
+        JButton btnCourses = new JButton(" Courses");
+        JButton btnLogout = new JButton("Logout");
 
-        loadNoticeTitles();
+        JButton[] buttons = {
+                btnAddNotice, btnStudents, btnStudentview, btnSubjects, btnCourses, btnLogout
+        };
 
-        setTitle("Dashboard");
-        setSize(600, 500);
+        for (JButton btn : buttons) {
+            btn.setFont(mainFont);
+            btn.setMaximumSize(new Dimension(180, 40));
+            btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            leftPanel.add(btn);
+            leftPanel.add(Box.createVerticalStrut(10));
+        }
+
+        btnAddNotice.addActionListener(e -> new Notice(this).initialize());
+        btnCourses.addActionListener(e -> {
+            // Example action for Courses button
+            JOptionPane.showMessageDialog(this, "Courses functionality is not implemented yet.");
+        });
+       btnStudents.addActionListener(e -> {
+        new StudentRegistration();
+        });
+
+        btnLogout.addActionListener(e -> {
+       dispose();          // close dashboard
+       Login.main(null);   // open Login screen
+     });
+
+        add(leftPanel, BorderLayout.WEST);
+
+        // ================= RIGHT NOTICE CONTAINER =================
+JPanel rightPanel = new JPanel(new BorderLayout());
+rightPanel.setBackground(Color.WHITE);
+
+// ===== HEADER (ALWAYS VISIBLE) =====
+JLabel headerLabel = new JLabel("Notices");
+headerLabel.setFont(new Font("Segoe Print", Font.BOLD, 20));
+headerLabel.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
+rightPanel.add(headerLabel, BorderLayout.NORTH);
+headerLabel.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(200, 200, 200)),
+        BorderFactory.createEmptyBorder(15, 20, 10, 20)
+));
+
+// ===== NOTICE LIST (SCROLLABLE) =====
+noticeListPanel = new JPanel();
+noticeListPanel.setLayout(new BoxLayout(noticeListPanel, BoxLayout.Y_AXIS));
+noticeListPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 15, 20));
+noticeListPanel.setBackground(Color.WHITE);
+
+JScrollPane scrollPane = new JScrollPane(noticeListPanel);
+scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+scrollPane.setBorder(null);
+
+rightPanel.add(scrollPane, BorderLayout.CENTER);
+
+// ===== ADD TO FRAME =====
+add(rightPanel, BorderLayout.CENTER);
+
+// LOAD DATA
+loadNoticeTitles();
+
+        setTitle("Admin Dashboard");
+        setSize(900, 550);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
     }
 
+    // ================= LOAD ONLY NOTICE TITLES =================
     public void loadNoticeTitles() {
-    noticeListPanel.removeAll();
 
-    try (Connection con = DBConfig.getConnection();
-         PreparedStatement ps = con.prepareStatement(
-                 "SELECT id, title FROM notice ORDER BY id DESC")) {
+        noticeListPanel.removeAll();
 
-        ResultSet rs = ps.executeQuery();
+        try (Connection con = DBConfig.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT id, title FROM notice ORDER BY id DESC")) {
 
-        while (rs.next()) {
-            int id = rs.getInt("id");
-            String title = rs.getString("title");
+            ResultSet rs = ps.executeQuery();
 
-            JButton titleBtn = new JButton(title);
-            titleBtn.setFont(mainFont);
-            titleBtn.setHorizontalAlignment(SwingConstants.LEFT);
+            while (rs.next()) {
 
-            // ✅ CLICK TO OPEN NOTICE
-            titleBtn.addActionListener(e ->
-                    new Notice(this).viewNotice(id)
-            );
+                int id = rs.getInt("id");
+                String title = rs.getString("title");
 
-            noticeListPanel.add(titleBtn);
-            noticeListPanel.add(Box.createVerticalStrut(5));
+                JPanel noticeBox = new JPanel(new BorderLayout());
+                noticeBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+                noticeBox.setBackground(new Color(245, 245, 245));
+                noticeBox.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                        BorderFactory.createEmptyBorder(10, 15, 10, 15)
+                ));
+
+                JLabel titleLabel = new JLabel(title);
+                titleLabel.setFont(mainFont);
+
+                noticeBox.add(titleLabel, BorderLayout.CENTER);
+                noticeBox.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+                noticeBox.addMouseListener(new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mouseClicked(java.awt.event.MouseEvent e) {
+                        new Notice(MainFrame.this).viewNotice(id);
+                    }
+                });
+
+                noticeListPanel.add(noticeBox);
+                noticeListPanel.add(Box.createVerticalStrut(8));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        noticeListPanel.revalidate();
+        noticeListPanel.repaint();
     }
-
-    noticeListPanel.revalidate();
-    noticeListPanel.repaint();
- }
 }
