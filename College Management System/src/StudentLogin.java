@@ -1,7 +1,11 @@
 import javax.swing.*;
 import java.awt.*;
+import java.sql.*;
 
 public class StudentLogin extends JFrame {
+
+    JTextField userField;
+    JPasswordField passField;
 
     public StudentLogin() {
 
@@ -24,7 +28,7 @@ public class StudentLogin extends JFrame {
         username.setBounds(50, 80, 100, 25);
         panel.add(username);
 
-        JTextField userField = new JTextField();
+        userField = new JTextField();
         userField.setBounds(150, 80, 180, 25);
         panel.add(userField);
 
@@ -32,7 +36,7 @@ public class StudentLogin extends JFrame {
         password.setBounds(50, 120, 100, 25);
         panel.add(password);
 
-        JPasswordField passField = new JPasswordField();
+        passField = new JPasswordField();
         passField.setBounds(150, 120, 180, 25);
         panel.add(passField);
 
@@ -45,23 +49,67 @@ public class StudentLogin extends JFrame {
 
         // ===== LOGIN BUTTON ACTION =====
         loginButton.addActionListener(e -> {
+
             String usernameText = userField.getText();
             String passwordText = new String(passField.getPassword());
 
-            if (usernameText.isEmpty() || passwordText.isEmpty()) {
+            StudentUser studentUser = getAuthenticatedStudent(usernameText, passwordText);
+
+            if (studentUser != null) {
+
                 JOptionPane.showMessageDialog(this,
-                        "Username or Password cannot be empty",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            } else {
-                // TODO: Connect to database and validate student
-                JOptionPane.showMessageDialog(this,
-                        "Login successful!",
-                        "Success",
+                        "Welcome " + studentUser.full_name,
+                        "Login Success",
                         JOptionPane.INFORMATION_MESSAGE);
+
+                //  OPEN STUDENT DASHBOARD
+                new StudentDashboard().initialize(studentUser);
+
+                dispose();
+
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid Username or Password",
+                        "Login Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
         setVisible(true);
+    }
+
+    // ================= DATABASE METHOD =================
+    private StudentUser getAuthenticatedStudent(String username, String password) {
+
+        StudentUser studentUser = null;
+
+        String sql = "SELECT * FROM student WHERE BINARY username = ? AND BINARY password = ?";
+
+        try (Connection con = DBConfig.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ps.setString(2, password);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                studentUser = new StudentUser();
+                studentUser.student_id = rs.getString("student_id");
+                studentUser.full_name = rs.getString("full_name");
+                studentUser.course = rs.getString("course");
+                studentUser.username = rs.getString("username");
+                studentUser.password = rs.getString("password");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return studentUser;
+    }
+
+    public static void main(String[] args) {
+        new StudentLogin();
     }
 }

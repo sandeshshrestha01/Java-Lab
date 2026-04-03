@@ -175,4 +175,6 @@ public class StudentRegistration extends JFrame {
             JOptionPane.showMessageDialog(this, "Failed to load courses");
         }
     }
+
+    
 }

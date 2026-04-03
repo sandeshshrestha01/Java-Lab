@@ -20,7 +20,7 @@ public class Login {
 
         //  CONNECT ADMIN LOGIN
         adminBtn.addActionListener(e -> {
-            new Adminlogin().initialize(); // open admin login
+            new Adminlogin(); // open admin login
             frame.dispose();               // close current window
         });
         

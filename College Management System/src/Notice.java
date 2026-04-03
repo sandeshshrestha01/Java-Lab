@@ -6,11 +6,19 @@ public class Notice extends JFrame {
 
     JTextField tfTitle;
     JTextArea taMessage;
-    MainFrame dashboard;
 
-    // For ADD notice
+    // 👇 SUPPORT BOTH DASHBOARDS
+    MainFrame dashboard;
+    StudentDashboard studentDashboard;
+
+    // ================= ADMIN CONSTRUCTOR =================
     public Notice(MainFrame dashboard) {
         this.dashboard = dashboard;
+    }
+
+    // ================= STUDENT CONSTRUCTOR =================
+    public Notice(StudentDashboard studentDashboard) {
+        this.studentDashboard = studentDashboard;
     }
 
     // ================= ADD NOTICE =================
@@ -43,6 +51,7 @@ public class Notice extends JFrame {
         setVisible(true);
     }
 
+    // ================= SAVE NOTICE =================
     private void saveNotice() {
 
         String title = tfTitle.getText();
@@ -63,8 +72,13 @@ public class Notice extends JFrame {
 
             JOptionPane.showMessageDialog(this, "Notice Uploaded");
 
+            // 👇 REFRESH BOTH DASHBOARDS
             if (dashboard != null) {
                 dashboard.loadNoticeTitles();
+            }
+
+            if (studentDashboard != null) {
+                studentDashboard.loadNotices();
             }
 
             dispose();
@@ -106,7 +120,12 @@ public class Notice extends JFrame {
             e.printStackTrace();
         }
 
-        btnDelete.addActionListener(e -> deleteNotice(noticeId));
+        // DELETE BUTTON ONLY WORKS FOR ADMIN
+        if (dashboard != null) {
+            btnDelete.addActionListener(e -> deleteNotice(noticeId));
+        } else {
+            btnDelete.setVisible(false); // hide for student
+        }
 
         JPanel top = new JPanel(new BorderLayout());
         top.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -122,7 +141,7 @@ public class Notice extends JFrame {
         setVisible(true);
     }
 
-    // ================= DELETE =================
+    // ================= DELETE NOTICE =================
     private void deleteNotice(int id) {
 
         int confirm = JOptionPane.showConfirmDialog(
@@ -143,8 +162,13 @@ public class Notice extends JFrame {
 
             JOptionPane.showMessageDialog(this, "Notice Deleted");
 
+            // 👇 REFRESH BOTH DASHBOARDS
             if (dashboard != null) {
                 dashboard.loadNoticeTitles();
+            }
+
+            if (studentDashboard != null) {
+                studentDashboard.loadNotices();
             }
 
             dispose();

@@ -38,14 +38,11 @@ public class MainFrame extends JFrame {
 
         JButton btnAddNotice = new JButton("+ Add Notice");
         JButton btnStudents = new JButton("+ Add Students");
-        JButton btnStudentview = new JButton(" Students");
-        JButton btnSubjects = new JButton("+ Add Subjects");
-        JButton btnCourses = new JButton(" Courses");
+        JButton btnStudentview = new JButton("View Students");
+        JButton btnCourses = new JButton("Courses");
         JButton btnLogout = new JButton("Logout");
 
-        JButton[] buttons = {
-                btnAddNotice, btnStudents, btnStudentview, btnSubjects, btnCourses, btnLogout
-        };
+        JButton[] buttons = {btnAddNotice, btnStudents, btnStudentview, btnCourses, btnLogout};
 
         for (JButton btn : buttons) {
             btn.setFont(mainFont);
@@ -56,52 +53,30 @@ public class MainFrame extends JFrame {
         }
 
         btnAddNotice.addActionListener(e -> new Notice(this).initialize());
-        btnCourses.addActionListener(e -> {
-            // Example action for Courses button
-            JOptionPane.showMessageDialog(this, "Courses functionality is not implemented yet.");
-        });
-       btnStudents.addActionListener(e -> {
-        new StudentRegistration();
-        });
-
+        btnCourses.addActionListener(e -> new Courses());
+        btnStudents.addActionListener(e -> new StudentRegistration());
+        btnStudentview.addActionListener(e -> new StudentListView()); // OPEN NEW PANEL FOR STUDENTS
         btnLogout.addActionListener(e -> {
-       dispose();          // close dashboard
-       Login.main(null);   // open Login screen
-     });
+            dispose();
+            Login.main(null);
+        });
 
         add(leftPanel, BorderLayout.WEST);
 
         // ================= RIGHT NOTICE CONTAINER =================
-JPanel rightPanel = new JPanel(new BorderLayout());
-rightPanel.setBackground(Color.WHITE);
+        noticeListPanel = new JPanel();
+        noticeListPanel.setLayout(new BoxLayout(noticeListPanel, BoxLayout.Y_AXIS));
+        noticeListPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 15, 20));
+        noticeListPanel.setBackground(Color.WHITE);
 
-// ===== HEADER (ALWAYS VISIBLE) =====
-JLabel headerLabel = new JLabel("Notices");
-headerLabel.setFont(new Font("Segoe Print", Font.BOLD, 20));
-headerLabel.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
-rightPanel.add(headerLabel, BorderLayout.NORTH);
-headerLabel.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(200, 200, 200)),
-        BorderFactory.createEmptyBorder(15, 20, 10, 20)
-));
+        JScrollPane scrollPane = new JScrollPane(noticeListPanel);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setBorder(null);
 
-// ===== NOTICE LIST (SCROLLABLE) =====
-noticeListPanel = new JPanel();
-noticeListPanel.setLayout(new BoxLayout(noticeListPanel, BoxLayout.Y_AXIS));
-noticeListPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 15, 20));
-noticeListPanel.setBackground(Color.WHITE);
+        add(scrollPane, BorderLayout.CENTER);
 
-JScrollPane scrollPane = new JScrollPane(noticeListPanel);
-scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-scrollPane.setBorder(null);
-
-rightPanel.add(scrollPane, BorderLayout.CENTER);
-
-// ===== ADD TO FRAME =====
-add(rightPanel, BorderLayout.CENTER);
-
-// LOAD DATA
-loadNoticeTitles();
+        // LOAD DATA
+        loadNoticeTitles();
 
         setTitle("Admin Dashboard");
         setSize(900, 550);
@@ -112,17 +87,14 @@ loadNoticeTitles();
 
     // ================= LOAD ONLY NOTICE TITLES =================
     public void loadNoticeTitles() {
-
         noticeListPanel.removeAll();
 
         try (Connection con = DBConfig.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT id, title FROM notice ORDER BY id DESC")) {
+             PreparedStatement ps = con.prepareStatement("SELECT id, title FROM notice ORDER BY id DESC")) {
 
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-
                 int id = rs.getInt("id");
                 String title = rs.getString("title");
 
